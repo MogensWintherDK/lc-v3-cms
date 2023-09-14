@@ -1,0 +1,36 @@
+{
+  "name": "@mogenswintherdk/lc-v3-cms",
+  "version": "1.0.5",
+  "description": "LC Common cms for v3 apps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "nodemon --watch \"package/**/*.tsx\" --ext ts,tsx --exec \"npm run build\"",
+    "prepublish": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mogenswintherdk/lc-v3-cms.git"
+  },
+  "author": "Mogens Winther",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mogenswintherdk/lc-v3-cms/issues"
+  },
+  "homepage": "https://github.com/mogenswintherdk/lc-v3-cms#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "dependencies": {
+    "firebase": "^10.3.1",
+    "next": "latest",
+    "nodemon": "^3.0.1",
+    "react": "^18.2.0",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.21"
+  }
+}
