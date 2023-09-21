@@ -34,8 +34,8 @@ export { getCMSFooterData } from './services/FooterService';
 export type { CMSHeaderDataInterface } from './services/HeaderService';
 export { getCMSHeaderData } from './services/HeaderService';
 
-// ImageService
-export type { CMSImageInterface, CMSImagesInterface } from './services/ImagesService';
+// Types
+export type { ICMSImage, ICMSImages } from './types/CMSImage';
 
 // ProductService
 export type {

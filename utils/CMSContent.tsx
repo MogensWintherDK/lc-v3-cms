@@ -1,7 +1,7 @@
 import { collection, getDocs, query, where, DocumentReference } from 'firebase/firestore';
 import { LNXStack } from '../../lib-lnx/utils';
 import { CMSFirestore } from '../services/FirebaseService';
-import { CMSImageInterface } from '../services/ImagesService';
+import { ICMSImage } from '../types/CMSImage';
 import { CMSTeaserInterface } from '../services/TeasersService';
 import { CMSArticleGroupInterface, CMSArticleInterface } from '../services/ArticleService';
 import { CMSProductGroupInterface, CMSProductInterface } from '../services/ProductsService';
@@ -119,7 +119,7 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
     }
 
     // Fetch only the images that are referenced by the pages
-    let images: CMSImageInterface[] = [];
+    let images: ICMSImage[] = [];
     if (imageIds.size > 0) {
         const imagesCollection = collection(CMSFirestore, 'images');
         const imagesQuery = query(imagesCollection, where('__name__', 'in', Array.from(imageIds)));
@@ -127,9 +127,9 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         images = imagesSnapshot.docs.map((doc) => ({
             id: doc.id,
             image_url: doc.data().image_url,
+            image_alt: doc.data().alt,
             size_type: doc.data().size_type,
-            alt: doc.data().alt,
-        })) as CMSImageInterface[];
+        })) as ICMSImage[];
     }
 
     // Fetch only the teasers that are referenced by the pages
