@@ -1,21 +1,21 @@
-import { firebase, firestore } from './FirebaseService';
 import { collection, getDocs, doc, getDoc, query, where, DocumentReference } from 'firebase/firestore';
+import { CMSFirestore } from './FirebaseService';
 
-export type ProductPathType = {
+export type CMSProductPathInterface = {
     params: {},
 }
 
-export type ProductPathsType = {
-    paths: ProductPathType[],
+export type CMSProductPathsInterface = {
+    paths: CMSProductPathInterface[],
 }
 // Product(s)
-export type ProductType = {
+export type CMSProductInterface = {
     id: string,
     name: string,
     price?: number;
     published?: boolean;
-    related_products?: RelatedProductsType;
-    related_images?: ProductImagesType;
+    related_products?: CMSRelatedProductsInterface;
+    related_images?: CMSProductImagesInterface;
     main_image_url: string;
     short_text?: string;
     long_text?: string;
@@ -25,51 +25,51 @@ export type ProductType = {
     updated_on?: Date;
 }
 
-export type ProductsType = {
-    products: ProductType[],
+export type CMSProductsInterface = {
+    products: CMSProductInterface[],
 }
 
 // Related product(s)
-export type RelatedProductType = {
+export type CMSRelatedProductInterface = {
     id: string,
     name: string,
     main_image_url: string;
     path: string;
 }
 
-export type RelatedProductsType = RelatedProductType[];
+export type CMSRelatedProductsInterface = CMSRelatedProductInterface[];
 
 // Related image(s)
-export type ProductImageType = {
+export type CMSProductImageInterface = {
     id: string,
     alt: string,
     image_url: string;
 }
-export type ProductImagesType = ProductImageType[];
+export type CMSProductImagesInterface = CMSProductImageInterface[];
 
 
-export type ProductGroupType = {
+export type CMSProductGroupInterface = {
     id: string;
     name: string;
     long_text: string;
     path: string;
 }
 
-export type ProductGroupsType = {
-    product_groups: ProductGroupType[];
+export type CMSProductGroupsInterface = {
+    product_groups: CMSProductGroupInterface[];
 }
 
-export const getProductPaths = async (): Promise<ProductPathsType> => {
+export const getCMSProductPaths = async (): Promise<CMSProductPathsInterface> => {
 
     const q = query(
-        collection(firestore, 'products'),
+        collection(CMSFirestore, 'products'),
         where('published', '==', true),
         //     where('render_static', '==', true)
     );
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
-            const data: ProductPathType = { params: { id: doc.id, slug: doc.data()['slug'] } };
+            const data: CMSProductPathInterface = { params: { id: doc.id, slug: doc.data()['slug'] } };
             return data;
 
         })
@@ -77,13 +77,13 @@ export const getProductPaths = async (): Promise<ProductPathsType> => {
     return { paths: items };
 };
 
-export const getProducts = async (): Promise<ProductsType> => {
-    const q = query(collection(firestore, 'products'), where('published', '==', true));
+export const getCMSProducts = async (): Promise<CMSProductsInterface> => {
+    const q = query(collection(CMSFirestore, 'products'), where('published', '==', true));
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
             const { created_on, updated_on, main_image, ...dataLimited } = doc.data();
-            const formattedData: ProductType = {
+            const formattedData: CMSProductInterface = {
                 id: doc.id,
                 name: dataLimited.name || '',
                 price: dataLimited.price || '',
@@ -102,9 +102,9 @@ export const getProducts = async (): Promise<ProductsType> => {
     return { products: items };
 };
 
-export const getProductsByGroup = async (product_group: string): Promise<ProductsType> => {
+export const getCMSProductsByGroup = async (product_group: string): Promise<CMSProductsInterface> => {
     const q = query(
-        collection(firestore, 'products'),
+        collection(CMSFirestore, 'products'),
         //where('type', '==', 'product'),
         where('published', '==', true),
         //    where('product_group', '==', product_group)
@@ -113,7 +113,7 @@ export const getProductsByGroup = async (product_group: string): Promise<Product
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
             const { created_on, updated_on, page_image, content, metadata, ...dataWithoutContent } = doc.data();
-            const formattedData: ProductType = {
+            const formattedData: CMSProductInterface = {
                 id: doc.id,
                 name: dataWithoutContent.name || '',
                 path: dataWithoutContent.path || '',
@@ -129,13 +129,13 @@ export const getProductsByGroup = async (product_group: string): Promise<Product
     return { products: items };
 };
 
-export const getProduct = async (id: string): Promise<ProductType | null> => {
-    const snapshot = await getDoc(doc(firestore, 'products', id));
+export const getCMSProduct = async (id: string): Promise<CMSProductInterface | null> => {
+    const snapshot = await getDoc(doc(CMSFirestore, 'products', id));
     if (snapshot.exists()) {
         const { main_image, related_products, related_images, product_group, ...data } = snapshot.data();
         // TODO: Fix the related products to search on product_group and not category
         const parsed_related_products = {};//await getRelatedProducts(id, data.category);
-        const parsed_related_images = await getRelatedImages(related_images);
+        const parsed_related_images = await getCMSRelatedImages(related_images);
         const formattedData = {
             id: snapshot.id,
             name: data.name || '',
@@ -145,24 +145,24 @@ export const getProduct = async (id: string): Promise<ProductType | null> => {
             created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
             updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
         };
-        return formattedData as ProductType;
+        return formattedData as CMSProductInterface;
     }
     return null;
 };
 
-export const getRelatedProducts = async (main_product_id: string, category: string): Promise<RelatedProductsType> => {
+export const getCMSRelatedProducts = async (main_product_id: string, category: string): Promise<CMSRelatedProductsInterface> => {
     const q = query(
-        collection(firestore, 'products'),
+        collection(CMSFirestore, 'products'),
         where('published', '==', true),
         where('category', '==', category),
     );
     const snapshot = await getDocs(q);
 
-    const items: RelatedProductType[] = snapshot.docs
+    const items: CMSRelatedProductInterface[] = snapshot.docs
         .filter(doc => doc.id !== main_product_id)
         .map((doc) => {
             const { created_on, updated_on, main_image, product_group, ...dataLimited } = doc.data();
-            const formattedData: RelatedProductType = {
+            const formattedData: CMSRelatedProductInterface = {
                 id: doc.id,
                 name: dataLimited.name || '',
                 main_image_url: dataLimited.main_image_url,
@@ -174,19 +174,19 @@ export const getRelatedProducts = async (main_product_id: string, category: stri
     return items;
 };
 
-export const getRelatedImages = async (related_images: DocumentReference[]): Promise<ProductImagesType> => {
+export const getCMSRelatedImages = async (related_images: DocumentReference[]): Promise<CMSProductImagesInterface> => {
     if (related_images == undefined || related_images.length == 0) {
         return [];
     }
     const relatedImageIds = related_images.map((ref) => ref.id);
     const q = query(
-        collection(firestore, 'images'),
+        collection(CMSFirestore, 'images'),
         where('__name__', 'in', relatedImageIds),
     );
     const snapshot = await getDocs(q);
-    const items: ProductImageType[] = snapshot.docs
+    const items: CMSProductImageInterface[] = snapshot.docs
         .map((doc) => {
-            const formattedData: ProductImageType = {
+            const formattedData: CMSProductImageInterface = {
                 id: doc.id,
                 alt: doc.data().alt || '',
                 image_url: doc.data().image_url,
@@ -197,15 +197,15 @@ export const getRelatedImages = async (related_images: DocumentReference[]): Pro
     return items;
 };
 
-export const getProductGroups = async (): Promise<ProductGroupsType> => {
+export const getCMSProductGroups = async (): Promise<CMSProductGroupsInterface> => {
     const q = query(
-        collection(firestore, 'product_groups'),
+        collection(CMSFirestore, 'product_groups'),
         where('published', '==', true),
     );
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
-            const formattedData: ProductGroupType = {
+            const formattedData: CMSProductGroupInterface = {
                 id: doc.id,
                 name: doc.data().name || '',
                 long_text: doc.data().long_text || '',

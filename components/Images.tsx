@@ -1,12 +1,12 @@
-import Image from 'next/image';
-import { ProductImageType } from '../services/ProductsService';
+import { LNXImage } from '../../lib-lnx/components';
+import { CMSProductImageInterface } from '../services/ProductsService';
 
-export const ImageProductSmall = ({ product_image }: { product_image: ProductImageType }) => {
+export function CMSImageProductSmall({ product_image }: { product_image: CMSProductImageInterface }): React.JSX.Element {
     return (
         <div key={product_image.id} className="ProductImageSmall cursor-pointer">
             <div className='Frame'>
                 <div className='Image'>
-                    <Image
+                    <LNXImage
                         src={product_image.image_url}
                         alt={product_image.alt}
                         width='136'

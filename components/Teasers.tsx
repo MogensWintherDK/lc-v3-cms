@@ -1,13 +1,13 @@
 import React from 'react';
-import { useRouter } from "next/router";
-import { ArticleType } from '../services/ArticleService';
-import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { LNXImage } from '../../lib-lnx/components';
+import { CMSArticleInterface } from '../services/ArticleService';
 
-export const TeaserList = ({ children }: { children: any }) => {
+export function CMSTeaserList({ children }: { children: any }): React.JSX.Element {
     return <ul>{children}</ul>
 }
 
-export const TeaserTextItem = ({ id, header, markdown, path }: { id: string, header: string, markdown?: string, path: string }) => {
+export function CMSTeaserTextItem({ id, header, markdown, path }: { id: string, header: string, markdown?: string, path: string }): React.JSX.Element {
     const router = useRouter();
     const clickHandler = (event: React.MouseEvent<HTMLLIElement>, path: string) => {
         event.preventDefault();
@@ -30,10 +30,9 @@ export const TeaserTextItem = ({ id, header, markdown, path }: { id: string, hea
             </div >
         </li>
     );
-
 }
 
-export const TeaserArticleItem = ({ article }: { article: ArticleType }) => {
+export function CMSTeaserArticleItem({ article }: { article: CMSArticleInterface }): React.JSX.Element {
     const router = useRouter();
     const clickHandler = (event: React.MouseEvent<HTMLLIElement>, path: string) => {
         event.preventDefault();
@@ -43,7 +42,7 @@ export const TeaserArticleItem = ({ article }: { article: ArticleType }) => {
     return (
         <li key={article.id} className='TeaserArticle Slim mt-8 p-0 cursor-pointer' onClick={(e: React.MouseEvent<HTMLLIElement>) => clickHandler(e, article.path)}>
             <div className='flex bg-white rounded'>
-                <Image
+                <LNXImage
                     className='hidden sm:flex self-start'
                     src={article.page_image_url}
                     alt={article.name}
@@ -62,5 +61,4 @@ export const TeaserArticleItem = ({ article }: { article: ArticleType }) => {
             </div >
         </li>
     );
-};
-
+}

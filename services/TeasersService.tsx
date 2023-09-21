@@ -1,7 +1,7 @@
-import { firestore } from './FirebaseService';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { CMSFirestore } from './FirebaseService';
 
-export interface TeaserImageInterface {
+export interface CMSTeaserImageInterface {
     id?: string,
     image_url: string,
     image_alt: string,
@@ -11,7 +11,7 @@ export interface TeaserImageInterface {
     text: string,
 }
 
-export type TeaserType = {
+export interface CMSTeaserInterface {
     id: String,
     image_url?: String,
     image_alt?: String,
@@ -23,18 +23,18 @@ export type TeaserType = {
     tag_href?: String,
 }
 
-export type TeasersType = {
-    teasers: TeaserType[];
+export interface CMSTeasersInterface {
+    teasers: CMSTeaserInterface[];
 }
 
 export const getAllTeasers = async () => {
-    const snapshot = await getDocs(collection(firestore, 'teasers'));
+    const snapshot = await getDocs(collection(CMSFirestore, 'teasers'));
     const items = snapshot.docs.map((doc) => ({ data: { id: doc.id, ...doc.data() } }));
     return items;
 };
 
 export const getTeaser = async (id: string) => {
-    const snapshot = await getDoc(doc(firestore, 'teasers', id));
+    const snapshot = await getDoc(doc(CMSFirestore, 'teasers', id));
     if (snapshot.exists()) {
         return snapshot.data();
     }

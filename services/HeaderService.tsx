@@ -1,8 +1,8 @@
-import { firestore } from './FirebaseService';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
-import { LinkType } from '@mogenswintherdk/lc-v3-nextjs';
+import { LNXLinkInterface } from '../../lib-lnx/components';
+import { CMSFirestore } from './FirebaseService';
 
-export type HeaderDataType = {
+export interface CMSHeaderDataInterface {
     id: string;
     name: string;
     class: string;
@@ -11,17 +11,17 @@ export type HeaderDataType = {
         image_path: string;
     };
     published?: boolean;
-    navigation_links?: LinkType[];
-    action_links?: LinkType[];
+    navigation_links?: LNXLinkInterface[];
+    action_links?: LNXLinkInterface[];
 };
 
-export const getHeaderData = async (): Promise<HeaderDataType> => {
-    const q = query(collection(firestore, 'headers'), where('published', '==', true), limit(1));
+export const getCMSHeaderData = async (): Promise<CMSHeaderDataInterface> => {
+    const q = query(collection(CMSFirestore, 'headers'), where('published', '==', true), limit(1));
     const snapshot = await getDocs(q);
     const doc = snapshot.docs[0];
 
     if (doc.exists()) {
-        const headerData: HeaderDataType = {
+        const headerData: CMSHeaderDataInterface = {
             id: doc.id,
             name: doc.data.name,
             class: doc.data().class,

@@ -1,26 +1,26 @@
-import { firestore } from './FirebaseService';
 import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
+import { CMSFirestore } from './FirebaseService';
 import { CMSContent } from '../utils/CMSContent';
 
-export type ArticlePathType = {
+export interface CMSArticlePathInterface {
     params: {},
 }
 
-export type ArticlePathsType = {
-    paths: ArticlePathType[],
+export interface CMSArticlePathsInterface {
+    paths: CMSArticlePathInterface[],
 }
 
-export interface HeaderSectionInterface {
+export interface CMSHeaderSectionInterface {
     id?: string,
     value: string,
 }
 
-export interface TextSectionInterface {
+export interface CMSTextSectionInterface {
     id?: string,
     value: string,
 }
 
-export interface CallToActionSectionInterface {
+export interface CMSCallToActionSectionInterface {
     id?: string,
     class: string
     header: string,
@@ -29,7 +29,7 @@ export interface CallToActionSectionInterface {
     link_href: string,
 }
 
-export interface StatementSectionInterface {
+export interface CMSStatementSectionInterface {
     id?: string,
     class?: string
     header: string,
@@ -37,19 +37,19 @@ export interface StatementSectionInterface {
     footer?: string,
 }
 
-export interface ButtonSectionInterface {
+export interface CMSButtonSectionInterface {
     id?: string,
     link_text: string,
     link_href: string,
 }
 
-export interface MetadataInterface {
+export interface CMSMetadataInterface {
     title: string,
     description: string,
     keywords?: string,
 }
 
-export type ArticleType = {
+export interface CMSArticleInterface {
     id: string;
     name: string;
     name_sub?: string;
@@ -60,30 +60,30 @@ export type ArticleType = {
     //page_image: string;
     page_image_url: string; // Resolved from Firebase storage 
     status: string;
-    metadata?: MetadataInterface;
+    metadata?: CMSMetadataInterface;
     created_on?: Date;
     updated_on?: Date;
 }
 
-export type ArticlesType = {
-    articles: ArticleType[];
+export interface CMSArticlesInterface {
+    articles: CMSArticleInterface[];
 }
 
-export type ArticleGroupType = {
+export interface CMSArticleGroupInterface {
     id: string;
     name: string;
     long_text: string;
     path: string;
 }
 
-export type ArticleGroupsType = {
-    article_groups: ArticleGroupType[];
+export interface CMSArticleGroupsInterface {
+    article_groups: CMSArticleGroupInterface[];
 }
 
-export const getArticlePaths = async (): Promise<ArticlePathsType> => {
+export const getCMSArticlePaths = async (): Promise<CMSArticlePathsInterface> => {
 
     const q = query(
-        collection(firestore, 'articles'),
+        collection(CMSFirestore, 'articles'),
         where('type', '==', 'article'),
         where('published', '==', true),
         where('render_static', '==', true)
@@ -91,7 +91,7 @@ export const getArticlePaths = async (): Promise<ArticlePathsType> => {
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
-            const data: ArticlePathType = { params: { id: doc.id, slug: doc.data()['slug'] } };
+            const data: CMSArticlePathInterface = { params: { id: doc.id, slug: doc.data()['slug'] } };
             return data;
 
         })
@@ -99,9 +99,9 @@ export const getArticlePaths = async (): Promise<ArticlePathsType> => {
     return { paths: items };
 };
 
-export const getArticles = async (articleType = 'article'): Promise<ArticlesType> => {
+export const getCMSArticles = async (articleType = 'article'): Promise<CMSArticlesInterface> => {
     const q = query(
-        collection(firestore, 'articles'),
+        collection(CMSFirestore, 'articles'),
         where('type', '==', articleType),
         where('published', '==', true),
     );
@@ -109,7 +109,7 @@ export const getArticles = async (articleType = 'article'): Promise<ArticlesType
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
             const { created_on, updated_on, page_image, content, metadata, ...dataWithoutContent } = doc.data();
-            const formattedData: ArticleType = {
+            const formattedData: CMSArticleInterface = {
                 id: doc.id,
                 name: dataWithoutContent.name || '',
                 teaser: dataWithoutContent.teaser || '',
@@ -127,15 +127,15 @@ export const getArticles = async (articleType = 'article'): Promise<ArticlesType
     return { articles: items };
 };
 
-export const getArticleGroups = async (): Promise<ArticleGroupsType> => {
+export const getCMSArticleGroups = async (): Promise<CMSArticleGroupsInterface> => {
     const q = query(
-        collection(firestore, 'article_groups'),
+        collection(CMSFirestore, 'article_groups'),
         where('published', '==', true),
     );
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
-            const formattedData: ArticleGroupType = {
+            const formattedData: CMSArticleGroupInterface = {
                 id: doc.id,
                 name: doc.data().name || '',
                 long_text: doc.data().long_text || '',
@@ -147,9 +147,9 @@ export const getArticleGroups = async (): Promise<ArticleGroupsType> => {
     return { article_groups: items };
 };
 
-export const getArticlesByGroup = async (article_group: string): Promise<ArticlesType> => {
+export const getCMSArticlesByGroup = async (article_group: string): Promise<CMSArticlesInterface> => {
     const q = query(
-        collection(firestore, 'articles'),
+        collection(CMSFirestore, 'articles'),
         where('type', '==', 'article'),
         where('published', '==', true),
         //    where('article_group', '==', article_group)
@@ -158,7 +158,7 @@ export const getArticlesByGroup = async (article_group: string): Promise<Article
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
             const { created_on, updated_on, page_image, content, metadata, ...dataWithoutContent } = doc.data();
-            const formattedData: ArticleType = {
+            const formattedData: CMSArticleInterface = {
                 id: doc.id,
                 name: dataWithoutContent.name || '',
                 teaser: dataWithoutContent.teaser || '',
@@ -176,8 +176,8 @@ export const getArticlesByGroup = async (article_group: string): Promise<Article
     return { articles: items };
 };
 
-export const getArticle = async (id: string): Promise<ArticleType | null> => {
-    const snapshot = await getDoc(doc(firestore, 'articles', id));
+export const getCMSArticle = async (id: string): Promise<CMSArticleInterface | null> => {
+    const snapshot = await getDoc(doc(CMSFirestore, 'articles', id));
     if (snapshot.exists()) {
         const { page_image, link, content, article_group, ...data } = snapshot.data();
         const formattedData = {
@@ -186,14 +186,14 @@ export const getArticle = async (id: string): Promise<ArticleType | null> => {
             created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
             updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
         };
-        return formattedData as ArticleType;
+        return formattedData as CMSArticleInterface;
     }
     return null;
 };
 
-export const getArticleByType = async (articleType: string): Promise<ArticleType> => {
+export const getCMSArticleByType = async (articleType: string): Promise<CMSArticleInterface> => {
     const q = query(
-        collection(firestore, 'articles'),
+        collection(CMSFirestore, 'articles'),
         where('type', '==', articleType),
         where('published', '==', true),
         limit(1));
@@ -206,7 +206,7 @@ export const getArticleByType = async (articleType: string): Promise<ArticleType
             created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
             updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
         };
-        return formattedData as ArticleType;
+        return formattedData as CMSArticleInterface;
     }
-    return {} as ArticleType;
+    return {} as CMSArticleInterface;
 };

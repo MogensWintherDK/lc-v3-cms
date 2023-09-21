@@ -1,10 +1,10 @@
-import { firestore } from '../services/FirebaseService';
 import { collection, getDocs, query, where, DocumentReference } from 'firebase/firestore';
-import { ImageType } from '../services/ImagesService';
-import { TeaserType } from '../services/TeasersService';
-import { ArticleGroupType, ArticleType } from '../services/ArticleService';
-import { ProductGroupType, ProductType } from '../services/ProductsService';
-import { Stack } from '@mogenswintherdk/lc-v3-nextjs';
+import { LNXStack } from '../../lib-lnx/utils';
+import { CMSFirestore } from '../services/FirebaseService';
+import { CMSImageInterface } from '../services/ImagesService';
+import { CMSTeaserInterface } from '../services/TeasersService';
+import { CMSArticleGroupInterface, CMSArticleInterface } from '../services/ArticleService';
+import { CMSProductGroupInterface, CMSProductInterface } from '../services/ProductsService';
 
 export interface CMSItemInterface {
     id: string,
@@ -28,13 +28,13 @@ export interface CMSItemDataInterface extends CMSItemInterface {
 export const CMSContent = async (content: Array<any>): Promise<any> => {
 
     const output: CMSItemListInterface = { id: 'root', type: 'article', items: [] };
-    const stack = new Stack<CMSItemInterface>();
+    const stack = new LNXStack<CMSItemInterface>();
 
     // We push in our output list object as the root of the stack. All items not in a separate root
     // will be in this list
     stack.push(output);
 
-    const traverseContent = (content: any, callback: (value: any, stack: Stack<CMSItemInterface>, key?: string | number, parent?: any) => void, parent?: any, key?: string | number) => {
+    const traverseContent = (content: any, callback: (value: any, stack: LNXStack<CMSItemInterface>, key?: string | number, parent?: any) => void, parent?: any, key?: string | number) => {
         // Root level array
         if (Array.isArray(content)) {
             content.forEach((value, index) => {
@@ -105,9 +105,9 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
     });
 
     // Fetch only the products that are referenced by the pages
-    let productsById: ProductType[] = [];
+    let productsById: CMSProductInterface[] = [];
     if (productIds.size > 0) {
-        const productsCollection = collection(firestore, 'products');
+        const productsCollection = collection(CMSFirestore, 'products');
         const productsQuery = query(productsCollection, where('__name__', 'in', Array.from(productIds)));
         const productsSnapshot = await getDocs(productsQuery);
         productsById = productsSnapshot.docs.map((doc) => ({
@@ -115,13 +115,13 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             name: doc.data().name,
             short_text: doc.data().short_text,
             main_image_url: doc.data().main_image_url,
-        })) as ProductType[];
+        })) as CMSProductInterface[];
     }
 
     // Fetch only the images that are referenced by the pages
-    let images: ImageType[] = [];
+    let images: CMSImageInterface[] = [];
     if (imageIds.size > 0) {
-        const imagesCollection = collection(firestore, 'images');
+        const imagesCollection = collection(CMSFirestore, 'images');
         const imagesQuery = query(imagesCollection, where('__name__', 'in', Array.from(imageIds)));
         const imagesSnapshot = await getDocs(imagesQuery);
         images = imagesSnapshot.docs.map((doc) => ({
@@ -129,13 +129,13 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             image_url: doc.data().image_url,
             size_type: doc.data().size_type,
             alt: doc.data().alt,
-        })) as ImageType[];
+        })) as CMSImageInterface[];
     }
 
     // Fetch only the teasers that are referenced by the pages
-    let teasers: TeaserType[] = [];
+    let teasers: CMSTeaserInterface[] = [];
     if (teaserIds.size > 0) {
-        const teasersCollection = collection(firestore, 'teasers');
+        const teasersCollection = collection(CMSFirestore, 'teasers');
         const teasersQuery = query(teasersCollection,
             where('__name__', 'in', Array.from(teaserIds))
         );
@@ -148,13 +148,13 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             link_text: doc.data().link_text,
             header: doc.data().header,
             text: doc.data().text,
-        })) as TeaserType[];
+        })) as CMSTeaserInterface[];
     }
 
     // Fetch only the articles that are referenced by the pages
-    let articlesByGroup: ArticleType[] = [];
+    let articlesByGroup: CMSArticleInterface[] = [];
     if (articleGroupReferences.size > 0) {
-        const articlesCollection = collection(firestore, 'articles');
+        const articlesCollection = collection(CMSFirestore, 'articles');
         const articlesQuery = query(articlesCollection,
             where('type', '==', 'article'),
             where('published', '==', true),
@@ -171,13 +171,13 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             status: doc.data().status || '',
             created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
             updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
-        })) as ArticleType[];
+        })) as CMSArticleInterface[];
     }
 
     // Fetch only the products that are referenced by the pages
-    let productsByGroup: ProductType[] = [];
+    let productsByGroup: CMSProductInterface[] = [];
     if (productGroupReferences.size > 0) {
-        const productsCollection = collection(firestore, 'products');
+        const productsCollection = collection(CMSFirestore, 'products');
         const productsQuery = query(productsCollection,
             where('type', '==', 'product'),
             where('published', '==', true),
@@ -191,12 +191,12 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             main_image_url: doc.data().main_image_url,
             created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
             updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
-        })) as ProductType[];
+        })) as CMSProductInterface[];
     }
 
-    let article_groups: ArticleGroupType[] = [];
+    let article_groups: CMSArticleGroupInterface[] = [];
     if (articleGroupIds.size > 0) {
-        const myCollection = collection(firestore, 'article_groups');
+        const myCollection = collection(CMSFirestore, 'article_groups');
         const myQuery = query(myCollection,
             where('__name__', 'in', Array.from(articleGroupIds)),
             where('published', '==', true),
@@ -207,12 +207,12 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             name: doc.data().name || '',
             long_text: doc.data().long_text || '',
             path: doc.data().path || '#',
-        })) as ArticleGroupType[];
+        })) as CMSArticleGroupInterface[];
     }
 
-    let product_groups: ProductGroupType[] = [];
+    let product_groups: CMSProductGroupInterface[] = [];
     if (productGroupIds.size > 0) {
-        const myCollection = collection(firestore, 'product_groups');
+        const myCollection = collection(CMSFirestore, 'product_groups');
         const myQuery = query(myCollection,
             where('__name__', 'in', Array.from(productGroupIds)),
             where('published', '==', true),
@@ -223,7 +223,7 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             name: doc.data().name || '',
             long_text: doc.data().long_text || '',
             path: doc.data().path || '#',
-        })) as ProductGroupType[];
+        })) as CMSProductGroupInterface[];
     }
 
     // Get all unique product/image/teaser IDs referenced by the pages
