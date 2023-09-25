@@ -1,5 +1,5 @@
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
-import { LNXLinkInterface } from '../../lib-lnx/components';
+import { LNXLinkInterface } from '../../lib-lnx/types';
 import { CMSFirestore } from './FirebaseService';
 
 
