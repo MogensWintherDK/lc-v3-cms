@@ -1,5 +1,7 @@
 import { collection, getDocs, doc, getDoc, query, where, DocumentReference } from 'firebase/firestore';
 import { CMSFirestore } from './FirebaseService';
+import { parseCMSMetadata } from '../utils/CMSMetadata';
+import { ICMSMetadata } from '../services';
 
 export type CMSProductPathInterface = {
     params: {},
@@ -21,6 +23,7 @@ export type CMSProductInterface = {
     long_text?: string;
     path: string;
     visibility?: string;
+    metadata?: ICMSMetadata;
     created_on?: Date;
     updated_on?: Date;
 }
@@ -130,23 +133,26 @@ export const getCMSProductsByGroup = async (product_group: string): Promise<CMSP
 };
 
 export const getCMSProduct = async (id: string): Promise<CMSProductInterface | null> => {
-    const snapshot = await getDoc(doc(CMSFirestore, 'products', id));
-    if (snapshot.exists()) {
-        const { main_image, related_products, related_images, product_group, ...data } = snapshot.data();
-        // TODO: Fix the related products to search on product_group and not category
-        const parsed_related_products = {};//await getRelatedProducts(id, data.category);
-        const parsed_related_images = await getCMSRelatedImages(related_images);
-        const formattedData = {
-            id: snapshot.id,
-            name: data.name || '',
-            related_products: parsed_related_products,
-            related_images: parsed_related_images,
-            ...data,
-            created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
-            updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
-        };
-        return formattedData as CMSProductInterface;
-    }
+    try {
+        const snapshot = await getDoc(doc(CMSFirestore, 'products', id));
+        if (snapshot.exists()) {
+            const { main_image, related_products, related_images, product_group, metadata, ...data } = snapshot.data();
+            // TODO: Fix the related products to search on product_group and not category
+            const parsed_related_products = {};//await getRelatedProducts(id, data.category);
+            const parsed_related_images = await getCMSRelatedImages(related_images);
+            const formattedData = {
+                id: snapshot.id,
+                name: data.name || '',
+                related_products: parsed_related_products,
+                related_images: parsed_related_images,
+                ...data,
+                metadata: parseCMSMetadata(metadata),
+                created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+                updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+            };
+            return formattedData as CMSProductInterface;
+        }
+    } catch (e) { }
     return null;
 };
 

@@ -2,6 +2,7 @@ import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/
 import { CMSFirestore } from './FirebaseService';
 import { CMSContent } from '../utils/CMSContent';
 import { ICMSMetadata } from '../types/CMSMetadata';
+import { parseCMSMetadata } from '../utils/CMSMetadata';
 
 export interface CMSArticlePathInterface {
     params: {},
@@ -172,18 +173,20 @@ export const getCMSArticlesByGroup = async (article_group: string): Promise<CMSA
 };
 
 export const getCMSArticle = async (id: string): Promise<CMSArticleInterface | null> => {
-    const snapshot = await getDoc(doc(CMSFirestore, 'articles', id));
-    if (snapshot.exists()) {
-        const { page_image, link, content, article_group, metadata, ...data } = snapshot.data();
-        const formattedData = {
-            ...data,
-            content: await CMSContent(content),
-            metadata: parseMetadata(metadata),
-            created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
-            updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
-        };
-        return formattedData as CMSArticleInterface;
-    }
+    try {
+        const snapshot = await getDoc(doc(CMSFirestore, 'articles', id));
+        if (snapshot.exists()) {
+            const { page_image, link, content, article_group, metadata, ...data } = snapshot.data();
+            const formattedData = {
+                ...data,
+                content: await CMSContent(content),
+                metadata: parseCMSMetadata(metadata),
+                created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+                updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+            };
+            return formattedData as CMSArticleInterface;
+        }
+    } catch (e) { }
     return null;
 };
 
@@ -199,7 +202,7 @@ export const getCMSArticleByType = async (articleType: string): Promise<CMSArtic
         const formattedData = {
             ...data,
             content: await CMSContent(content),
-            metadata: parseMetadata(metadata),
+            metadata: parseCMSMetadata(metadata),
             created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
             updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
         };
@@ -207,12 +210,3 @@ export const getCMSArticleByType = async (articleType: string): Promise<CMSArtic
     }
     return {} as CMSArticleInterface;
 };
-
-const parseMetadata = (metadata: ICMSMetadata): ICMSMetadata => {
-    return {
-        title: metadata.title || 'Foto.dk',
-        description: metadata.description || '',
-        keywords: metadata.keywords || '',
-        image_url: metadata.image_url || 'https://storage.googleapis.com/fdk-demo.appspot.com/images/8ckxr_Vaegbilleder_laerred_plakater_poster_gaveide_264.jpg',
-    }
-}
