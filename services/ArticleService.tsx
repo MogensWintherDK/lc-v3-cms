@@ -1,6 +1,7 @@
 import { collection, getDocs, doc, getDoc, query, where, limit } from 'firebase/firestore';
 import { CMSFirestore } from './FirebaseService';
 import { CMSContent } from '../utils/CMSContent';
+import { ICMSMetadata } from '../types/CMSMetadata';
 
 export interface CMSArticlePathInterface {
     params: {},
@@ -43,12 +44,6 @@ export interface CMSButtonSectionInterface {
     link_href: string,
 }
 
-export interface CMSMetadataInterface {
-    title: string,
-    description: string,
-    keywords?: string,
-}
-
 export interface CMSArticleInterface {
     id: string;
     name: string;
@@ -60,7 +55,7 @@ export interface CMSArticleInterface {
     //page_image: string;
     page_image_url: string; // Resolved from Firebase storage 
     status: string;
-    metadata?: CMSMetadataInterface;
+    metadata?: ICMSMetadata;
     created_on?: Date;
     updated_on?: Date;
 }

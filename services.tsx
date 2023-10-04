@@ -11,7 +11,6 @@ export type {
     CMSCallToActionSectionInterface,
     CMSStatementSectionInterface,
     CMSButtonSectionInterface,
-    CMSMetadataInterface,
 } from './services/ArticleService';
 
 export {
@@ -36,6 +35,7 @@ export { getCMSHeaderData } from './services/HeaderService';
 
 // Types
 export type { ICMSImage, ICMSImages } from './types/CMSImage';
+export type { ICMSMetadata } from './types/CMSMetadata';
 
 // ProductService
 export type {
