@@ -34,7 +34,7 @@ import { ICMSImage } from '../types/CMSImage';
 import { CMSItemInterface } from '../utils/CMSContent';
 
 
-export function CMSArticleView({ props }: { props: any }): React.JSX.Element {
+export function CMSArticleView({ className, props }: { className?: any, props: any }): React.JSX.Element {
     const ref = useRef<HTMLDivElement | null>(null);
 
     const handleClick = () => {
@@ -45,7 +45,7 @@ export function CMSArticleView({ props }: { props: any }): React.JSX.Element {
     };
 
     return (
-        <>
+        <div className={className}>
             {
                 props.page_image_url && (
                     <LNXHeroImage src={props.page_image_url} header={props.name} text={props.name_sub} onClick={handleClick} />
@@ -97,6 +97,6 @@ export function CMSArticleView({ props }: { props: any }): React.JSX.Element {
                     }
                 </div>
             </article>
-        </>
+        </div>
     );
 }
