@@ -179,8 +179,6 @@ export function CMSGridItemsWrapper({ items }: { items: CMSItemDataInterface[] }
             }
             case 'image_grid_card': {
                 const data = sub_item.data as CMSImageGridCardInterface;
-                console.log('image_grid_card');
-                console.log(data);
                 return <LNXImageGridCard key={sub_item.id} url={data.image_url} alt={data.image_alt} link_href={data.link_href} />;
             }
             default: return <></>

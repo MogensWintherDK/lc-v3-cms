@@ -279,7 +279,6 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         }
         // Some elements like an image can have a link next to it - We add merge the link
         if (entry.value.link_href && item.data) {
-            console.log('We found a link_href');
             item.data.link_href = entry.value.link_href;
         }
         if (parent && parent.items) {
