@@ -10,7 +10,7 @@ export interface CMSItemInterface {
     id: string,
     type: string,
     items?: any[],
-    data?: {},
+    data?: any,
 }
 
 export interface CMSItemListInterface extends CMSItemInterface {
@@ -276,6 +276,11 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         else if (entry.type && Array.isArray(entry.value)) {
             item.items = [];
             stack.push(item);
+        }
+        // Some elements like an image can have a link next to it - We add merge the link
+        if (entry.value.link_href && item.data) {
+            console.log('We found a link_href');
+            item.data.link_href = entry.value.link_href;
         }
         if (parent && parent.items) {
             parent.items.push(item);
