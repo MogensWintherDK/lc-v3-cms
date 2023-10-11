@@ -76,13 +76,12 @@ export interface CMSArticleGroupsInterface {
     article_groups: CMSArticleGroupInterface[];
 }
 
-export const getCMSArticlePaths = async (): Promise<CMSArticlePathsInterface> => {
+export const getCMSArticlePaths = async (type: string = 'article', published: boolean = true): Promise<CMSArticlePathsInterface> => {
 
     const q = query(
         collection(CMSFirestore, 'articles'),
-        where('type', '==', 'article'),
-        where('published', '==', true),
-        where('render_static', '==', true)
+        where('type', '==', type),
+        where('published', '==', published),
     );
     const snapshot = await getDocs(q);
     const items = await Promise.all(
@@ -177,6 +176,32 @@ export const getCMSArticle = async (id: string): Promise<CMSArticleInterface | n
         const snapshot = await getDoc(doc(CMSFirestore, 'articles', id));
         if (snapshot.exists()) {
             const { page_image, link, content, article_group, metadata, ...data } = snapshot.data();
+            const formattedData = {
+                ...data,
+                content: await CMSContent(content),
+                metadata: parseCMSMetadata(metadata),
+                created_on: (data.created_on ? data.created_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+                updated_on: (data.updated_on ? data.updated_on.toDate().toISOString() : new Date().toISOString()), // Convert Firestore Timestamp to JavaScript Date
+            };
+            return formattedData as CMSArticleInterface;
+        }
+    } catch (e) { }
+    return null;
+};
+
+export const getCMSArticleBySlug = async (slug: string): Promise<CMSArticleInterface | null> => {
+    try {
+        const q = query(
+            collection(CMSFirestore, 'articles'),
+            where('slug', '==', slug),
+            // where('published', '==', true),
+            limit(1)
+        );
+
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const doc = snapshot.docs[0];
+            const { page_image, link, content, article_group, metadata, ...data } = doc.data();
             const formattedData = {
                 ...data,
                 content: await CMSContent(content),

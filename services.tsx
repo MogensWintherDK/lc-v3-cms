@@ -19,6 +19,7 @@ export {
     getCMSArticleGroups,
     getCMSArticlesByGroup,
     getCMSArticle,
+    getCMSArticleBySlug,
     getCMSArticleByType,
 } from './services/ArticleService';
 
