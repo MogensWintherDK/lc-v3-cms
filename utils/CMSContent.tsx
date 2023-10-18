@@ -3,9 +3,8 @@ import { LNXStack } from '../../lib-lnx/utils';
 import { CMSFirestore } from '../services/FirebaseService';
 import { ICMSImage } from '../types/CMSImage';
 import { CMSTeaserInterface } from '../services/TeasersService';
-import { CMSArticleGroupInterface, CMSArticleInterface } from '../services/ArticleService';
-import { CMSProductGroupInterface, CMSProductInterface } from '../services/ProductsService';
-
+import { CMSArticleInterface } from '../services/ArticleService';
+import { CMSProductInterface } from '../services/ProductsService';
 export interface CMSItemInterface {
     id: string,
     type: string,
@@ -61,16 +60,18 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
     };
 
     // 1th traverse where we get all unique product/image/teaser IDs referenced by the pages
+    const articleIds = new Set<string>();
     const productIds = new Set<string>();
     const imageIds = new Set<string>();
     const teaserIds = new Set<string>();
-    const articleGroupIds = new Set<string>();
-    const articleGroupReferences = new Set<DocumentReference>();
-    const productGroupIds = new Set<string>();
-    const productGroupReferences = new Set<DocumentReference>();
+    const articleTags = new Set<string>();
+    const productTags = new Set<string>();
 
     traverseContent(content, (entity, stack, output) => {
-        if (entity.value instanceof DocumentReference && entity.value.path.startsWith('products/')) {
+        if (entity.value instanceof DocumentReference && entity.value.path.startsWith('articles/')) {
+            articleIds.add(entity.value.id);
+        }
+        else if (entity.value instanceof DocumentReference && entity.value.path.startsWith('products/')) {
             productIds.add(entity.value.id);
         }
         else if (entity.value instanceof DocumentReference && entity.value.path.startsWith('images/')) {
@@ -82,27 +83,50 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         else if (entity.value instanceof DocumentReference && entity.value.path.startsWith('teasers/')) {
             teaserIds.add(entity.value.id);
         }
-        else if (entity.value.article_group instanceof DocumentReference && entity.value.article_group.path.startsWith('article_groups/')) {
-            articleGroupReferences.add(entity.value.article_group);
-        }
-        else if (entity.value.product_group instanceof DocumentReference && entity.value.product_group.path.startsWith('product_groups/')) {
-            productGroupReferences.add(entity.value.product_group);
-        }
-        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_article_groups_list') {
-            entity.value.forEach((articleGroupRef: any) => {
-                if (articleGroupRef instanceof DocumentReference) {
-                    articleGroupIds.add(articleGroupRef.id);
+        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_articles_list') {
+            entity.value.forEach((articleRef: any) => {
+                if (articleRef instanceof DocumentReference) {
+                    articleIds.add(articleRef.id);
                 }
             });
         }
-        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_product_groups_list') {
-            entity.value.forEach((productGroupRef: any) => {
-                if (productGroupRef instanceof DocumentReference) {
-                    productGroupIds.add(productGroupRef.id);
+        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_products_list') {
+            entity.value.forEach((productRef: any) => {
+                if (productRef instanceof DocumentReference) {
+                    productIds.add(productRef.id);
                 }
+            });
+        }
+        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_products_tag_list') {
+            entity.value.forEach((tag: any) => {
+                productTags.add(tag);
+            });
+        }
+        else if (entity.value && Array.isArray(entity.value) && entity.type == 'slim_articles_tag_list') {
+            entity.value.forEach((tag: any) => {
+                articleTags.add(tag);
             });
         }
     });
+
+    // Fetch only the articles that are referenced by the pages
+    let articlesById: CMSArticleInterface[] = [];
+    if (articleIds.size > 0) {
+        const articlesCollection = collection(CMSFirestore, 'articles');
+        const articlesQuery = query(articlesCollection, where('__name__', 'in', Array.from(articleIds)));
+        const articlesSnapshot = await getDocs(articlesQuery);
+        articlesById = articlesSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            name: doc.data().name || '',
+            teaser: doc.data().teaser || '',
+            type: doc.data().type || '',
+            path: doc.data().slug || '',
+            page_image_url: doc.data().page_image_url || '',
+            status: doc.data().status || '',
+            created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
+            updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
+        })) as CMSArticleInterface[];
+    }
 
     // Fetch only the products that are referenced by the pages
     let productsById: CMSProductInterface[] = [];
@@ -112,6 +136,7 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         const productsSnapshot = await getDocs(productsQuery);
         productsById = productsSnapshot.docs.map((doc) => ({
             id: doc.id,
+            path: doc.data().slug,
             name: doc.data().name,
             short_text: doc.data().short_text,
             main_image_url: doc.data().main_image_url,
@@ -151,82 +176,49 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         })) as CMSTeaserInterface[];
     }
 
-    // Fetch only the articles that are referenced by the pages
-    let articlesByGroup: CMSArticleInterface[] = [];
-    if (articleGroupReferences.size > 0) {
-        const articlesCollection = collection(CMSFirestore, 'articles');
-        const articlesQuery = query(articlesCollection,
-            where('type', '==', 'article'),
+    let productsByTag: CMSProductInterface[] = [];
+    if (productTags.size > 0) {
+        const myCollection = collection(CMSFirestore, 'products');
+        const myQuery = query(myCollection,
             where('published', '==', true),
-            where('article_group', 'in', Array.from(articleGroupReferences))
+            where('tags', 'array-contains-any', Array.from(productTags))
         );
-        const articlesSnapshot = await getDocs(articlesQuery);
-        articlesByGroup = articlesSnapshot.docs.map((doc) => ({
+        const mySnapshot = await getDocs(myQuery);
+        productsByTag = mySnapshot.docs.map((doc) => ({
             id: doc.id,
             name: doc.data().name || '',
-            teaser: doc.data().teaser || '',
-            type: doc.data().type || '',
-            path: doc.data().path || '',
-            page_image_url: doc.data().page_image_url,
-            status: doc.data().status || '',
-            created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
-            updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
-        })) as CMSArticleInterface[];
-    }
-
-    // Fetch only the products that are referenced by the pages
-    let productsByGroup: CMSProductInterface[] = [];
-    if (productGroupReferences.size > 0) {
-        const productsCollection = collection(CMSFirestore, 'products');
-        const productsQuery = query(productsCollection,
-            where('type', '==', 'product'),
-            where('published', '==', true),
-            where('product_group', 'in', Array.from(productGroupReferences))
-        );
-        const productsSnapshot = await getDocs(productsQuery);
-        productsByGroup = productsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.data().name || '',
-            path: doc.data().path || '',
+            path: doc.data().slug || '',
+            tags: doc.data().tags || [],
             main_image_url: doc.data().main_image_url,
             created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
             updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
         })) as CMSProductInterface[];
     }
 
-    let article_groups: CMSArticleGroupInterface[] = [];
-    if (articleGroupIds.size > 0) {
-        const myCollection = collection(CMSFirestore, 'article_groups');
+    let articlesByTag: CMSArticleInterface[] = [];
+    if (articleTags.size > 0) {
+        const myCollection = collection(CMSFirestore, 'articles');
         const myQuery = query(myCollection,
-            where('__name__', 'in', Array.from(articleGroupIds)),
             where('published', '==', true),
+            where('tags', 'array-contains-any', Array.from(articleTags))
         );
         const mySnapshot = await getDocs(myQuery);
-        article_groups = mySnapshot.docs.map((doc) => ({
+        articlesByTag = mySnapshot.docs.map((doc) => ({
             id: doc.id,
             name: doc.data().name || '',
-            long_text: doc.data().long_text || '',
-            path: doc.data().path || '#',
-        })) as CMSArticleGroupInterface[];
-    }
-
-    let product_groups: CMSProductGroupInterface[] = [];
-    if (productGroupIds.size > 0) {
-        const myCollection = collection(CMSFirestore, 'product_groups');
-        const myQuery = query(myCollection,
-            where('__name__', 'in', Array.from(productGroupIds)),
-            where('published', '==', true),
-        );
-        const mySnapshot = await getDocs(myQuery);
-        product_groups = mySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.data().name || '',
-            long_text: doc.data().long_text || '',
-            path: doc.data().path || '#',
-        })) as CMSProductGroupInterface[];
+            teaser: doc.data().teaser || '',
+            type: doc.data().type || '',
+            path: doc.data().slug || '',
+            tags: doc.data().tags || [],
+            page_image_url: doc.data().page_image_url || '',
+            status: doc.data().status || '',
+            created_on: doc.data().created_on ? doc.data().created_on.toDate().toISOString() : new Date().toISOString(),
+            updated_on: doc.data().updated_on ? doc.data().updated_on.toDate().toISOString() : new Date().toISOString(),
+        })) as CMSArticleInterface[];
     }
 
     // Get all unique product/image/teaser IDs referenced by the pages
+    const articleMap = new Map(articlesById.map((article) => [article.id, article]));
     const productMap = new Map(productsById.map((product) => [product.id, product]));
     const imageMap = new Map(images.map((image) => [image.id, image]));
     const teaserMap = new Map(teasers.map((teaser) => [teaser.id, teaser]));
@@ -252,17 +244,33 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         else if (entry.value instanceof DocumentReference && entry.value.path.startsWith('teasers/')) {
             item.data = teaserMap.get(entry.value.id);
         }
-        else if (entry.value.article_group instanceof DocumentReference && entry.value.article_group.path.startsWith('article_groups/')) {
-            item.data = { articles: articlesByGroup };
+        else if (entry.type == 'slim_articles_list' && Array.isArray(entry.value)) {
+            item.data = { articles: [] }
+            entry.value.map((articleRef: DocumentReference) => {
+                item.data.articles.push(articleMap.get(articleRef.id));
+            })
         }
-        else if (entry.value.product_group instanceof DocumentReference && entry.value.product_group.path.startsWith('product_groups/')) {
-            item.data = { products: productsByGroup };
+        else if (entry.type == 'slim_products_list' && Array.isArray(entry.value)) {
+            item.data = { products: [] }
+            entry.value.map((productRef: DocumentReference) => {
+                item.data.products.push(productMap.get(productRef.id));
+            })
         }
-        else if (entry.type == 'slim_article_groups_list' && Array.isArray(entry.value)) {
-            item.data = { article_groups: article_groups };
+        else if (entry.type == 'slim_products_tag_list' && Array.isArray(entry.value)) {
+            item.data = { products: [] }
+            productsByTag.map((product) => {
+                if (product.tags && product.tags.some(tag => entry.value.includes(tag))) {
+                    item.data.products.push(product);
+                }
+            })
         }
-        else if (entry.type == 'slim_product_groups_list' && Array.isArray(entry.value)) {
-            item.data = { product_groups: product_groups };
+        else if (entry.type == 'slim_articles_tag_list' && Array.isArray(entry.value)) {
+            item.data = { articles: [] }
+            articlesByTag.map((article) => {
+                if (article.tags && article.tags.some(tag => entry.value.includes(tag))) {
+                    item.data.articles.push(article);
+                }
+            })
         }
         // Any simple object - We keep the data
         else if (entry.type && !Array.isArray(entry.value) && entry.value instanceof Object) {

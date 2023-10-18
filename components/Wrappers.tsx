@@ -5,10 +5,8 @@ import {
     CMSStatementSectionInterface,
     CMSButtonSectionInterface,
     CMSArticlesInterface,
-    CMSArticleGroupsInterface,
 } from '../services/ArticleService';
 import {
-    CMSProductGroupsInterface,
     CMSProductInterface,
     CMSProductsInterface,
 } from '../services/ProductsService';
@@ -17,8 +15,6 @@ import { CMSTeaserImageInterface } from '../services/TeasersService';
 import { ICMSImage } from '../types/CMSImage';
 import { CMSArticlesListSection } from '../sections/ArticlesListSection';
 import { CMSProductsListSection } from '../sections/ProductsListSection';
-import { CMSArticleGroupsListSection } from '../sections/ArticleGroupsListSection';
-import { CMSProductGroupsListSection } from '../sections/ProductGroupsListSection';
 import {
     CMSTeaserImageGridCard,
     CMSTeaserProductGridCard,
@@ -143,19 +139,11 @@ export const CMSSlimYouTubePlayerSectionWrapper = ({ video }: { video: CMSYouTub
 }
 
 export const CMSArticlesListSectionWrapper = ({ data }: { data: CMSArticlesInterface }): React.JSX.Element => {
-    return <CMSArticlesListSection data={data.articles}></CMSArticlesListSection>
-}
-
-export const CMSArticleGroupsListSectionWrapper = ({ article_groups }: { article_groups: CMSArticleGroupsInterface }): React.JSX.Element => {
-    return <CMSArticleGroupsListSection article_groups={article_groups.article_groups}></CMSArticleGroupsListSection>
+    return <CMSArticlesListSection data={data}></CMSArticlesListSection>
 }
 
 export const CMSProductsListSectionWrapper = ({ data }: { data: CMSProductsInterface }): React.JSX.Element => {
-    return <CMSProductsListSection data={data.products}></CMSProductsListSection>
-}
-
-export const CMSProductGroupsListSectionWrapper = ({ product_groups }: { product_groups: CMSProductGroupsInterface }): React.JSX.Element => {
-    return <CMSProductGroupsListSection product_groups={product_groups.product_groups}></CMSProductGroupsListSection>
+    return <CMSProductsListSection data={data}></CMSProductsListSection>
 }
 
 export function CMSGridItemsWrapper({ items }: { items: CMSItemDataInterface[] }): React.JSX.Element[] {

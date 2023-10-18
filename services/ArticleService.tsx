@@ -49,12 +49,12 @@ export interface CMSArticleInterface {
     id: string;
     name: string;
     name_sub?: string;
+    tags?: string[];
     teaser: string;
     type: string;
     path: string;
     content?: any;
-    //page_image: string;
-    page_image_url: string; // Resolved from Firebase storage 
+    page_image_url: string;
     status: string;
     metadata?: ICMSMetadata;
     created_on?: Date;
@@ -63,17 +63,6 @@ export interface CMSArticleInterface {
 
 export interface CMSArticlesInterface {
     articles: CMSArticleInterface[];
-}
-
-export interface CMSArticleGroupInterface {
-    id: string;
-    name: string;
-    long_text: string;
-    path: string;
-}
-
-export interface CMSArticleGroupsInterface {
-    article_groups: CMSArticleGroupInterface[];
 }
 
 export const getCMSArticlePaths = async (type: string = 'article', published: boolean = true): Promise<CMSArticlePathsInterface> => {
@@ -86,7 +75,12 @@ export const getCMSArticlePaths = async (type: string = 'article', published: bo
     const snapshot = await getDocs(q);
     const items = await Promise.all(
         snapshot.docs.map(async (doc) => {
-            const data: CMSArticlePathInterface = { params: { id: doc.id, slug: doc.data()['slug'] } };
+            const data: CMSArticlePathInterface = {
+                params: {
+                    id: doc.id,
+                    slug: doc.data()['slug'].split('/').pop(),
+                }
+            };
             return data;
 
         })
@@ -110,56 +104,7 @@ export const getCMSArticles = async (articleType = 'article'): Promise<CMSArticl
                 teaser: dataWithoutContent.teaser || '',
                 type: dataWithoutContent.type || '',
                 path: dataWithoutContent.path || '',
-                page_image_url: dataWithoutContent.page_image_url,
-                status: dataWithoutContent.status || '',
-                created_on: created_on ? created_on.toDate().toISOString() : new Date().toISOString(),
-                updated_on: updated_on ? updated_on.toDate().toISOString() : new Date().toISOString(),
-            };
-            return formattedData;
-        })
-    );
-
-    return { articles: items };
-};
-
-export const getCMSArticleGroups = async (): Promise<CMSArticleGroupsInterface> => {
-    const q = query(
-        collection(CMSFirestore, 'article_groups'),
-        where('published', '==', true),
-    );
-    const snapshot = await getDocs(q);
-    const items = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-            const formattedData: CMSArticleGroupInterface = {
-                id: doc.id,
-                name: doc.data().name || '',
-                long_text: doc.data().long_text || '',
-                path: doc.data().path || '#',
-            };
-            return formattedData;
-        })
-    );
-    return { article_groups: items };
-};
-
-export const getCMSArticlesByGroup = async (article_group: string): Promise<CMSArticlesInterface> => {
-    const q = query(
-        collection(CMSFirestore, 'articles'),
-        where('type', '==', 'article'),
-        where('published', '==', true),
-        //    where('article_group', '==', article_group)
-    );
-    const snapshot = await getDocs(q);
-    const items = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-            const { created_on, updated_on, page_image, content, metadata, ...dataWithoutContent } = doc.data();
-            const formattedData: CMSArticleInterface = {
-                id: doc.id,
-                name: dataWithoutContent.name || '',
-                teaser: dataWithoutContent.teaser || '',
-                type: dataWithoutContent.type || '',
-                path: dataWithoutContent.path || '',
-                page_image_url: dataWithoutContent.page_image_url,
+                page_image_url: dataWithoutContent.page_image_url || '',
                 status: dataWithoutContent.status || '',
                 created_on: created_on ? created_on.toDate().toISOString() : new Date().toISOString(),
                 updated_on: updated_on ? updated_on.toDate().toISOString() : new Date().toISOString(),
@@ -189,12 +134,13 @@ export const getCMSArticle = async (id: string): Promise<CMSArticleInterface | n
     return null;
 };
 
-export const getCMSArticleBySlug = async (slug: string): Promise<CMSArticleInterface | null> => {
+export const getCMSArticleBySlug = async (slug: string, path: string = ''): Promise<CMSArticleInterface | null> => {
     try {
+        const fullSlug = (path != '' ? '/' + path + '/' : '') + slug;
         const q = query(
             collection(CMSFirestore, 'articles'),
-            where('slug', '==', slug),
-            // where('published', '==', true),
+            where('slug', '==', fullSlug),
+            where('published', '==', true),
             limit(1)
         );
 

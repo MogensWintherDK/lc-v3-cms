@@ -4,8 +4,6 @@ export type {
     CMSArticlePathsInterface,
     CMSArticleInterface,
     CMSArticlesInterface,
-    CMSArticleGroupInterface,
-    CMSArticleGroupsInterface,
     CMSHeaderSectionInterface,
     CMSTextSectionInterface,
     CMSCallToActionSectionInterface,
@@ -16,8 +14,6 @@ export type {
 export {
     getCMSArticlePaths,
     getCMSArticles,
-    getCMSArticleGroups,
-    getCMSArticlesByGroup,
     getCMSArticle,
     getCMSArticleBySlug,
     getCMSArticleByType,
@@ -48,17 +44,14 @@ export type {
     CMSRelatedProductsInterface,
     CMSProductImageInterface,
     CMSProductImagesInterface,
-    CMSProductGroupInterface,
-    CMSProductGroupsInterface,
 } from './services/ProductsService';
 export {
     getCMSProductPaths,
     getCMSProducts,
-    getCMSProductsByGroup,
     getCMSProduct,
-    getCMSRelatedProducts,
+    getCMSProductBySlug,
+    getCMSRelatedProductsByTags,
     getCMSRelatedImages,
-    getCMSProductGroups,
 } from './services/ProductsService';
 
 // TeaserService

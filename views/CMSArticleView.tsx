@@ -9,10 +9,7 @@ import {
     CMSStatementSectionInterface,
     CMSButtonSectionInterface,
     CMSArticlesInterface,
-    CMSArticleGroupsInterface,
     CMSProductsInterface,
-    CMSProductGroupsInterface,
-    CMSProductInterface,
 } from '../services';
 import {
     CMSHeaderSectionWrapper,
@@ -25,8 +22,6 @@ import {
     CMSSlimYouTubePlayerSectionWrapper,
     CMSArticlesListSectionWrapper,
     CMSProductsListSectionWrapper,
-    CMSArticleGroupsListSectionWrapper,
-    CMSProductGroupsListSectionWrapper,
     CMSSlimTwoGridWrapper,
     CMSSlimThreeGridWrapper,
 } from '../components';
@@ -85,13 +80,11 @@ export function CMSArticleView({ className, props }: { className?: any, props: a
                                 case 'slim_youtube':
                                     return <CMSSlimYouTubePlayerSectionWrapper key={item.id} video={item.data as CMSYouTubePlayerInterface} />
                                 case 'slim_articles_list':
+                                case 'slim_articles_tag_list':
                                     return <CMSArticlesListSectionWrapper key={item.id} data={item.data as CMSArticlesInterface} />
                                 case 'slim_products_list':
+                                case 'slim_products_tag_list':
                                     return <CMSProductsListSectionWrapper key={item.id} data={item.data as CMSProductsInterface} />
-                                case 'slim_article_groups_list':
-                                    return <CMSArticleGroupsListSectionWrapper key={item.id} article_groups={item.data as CMSArticleGroupsInterface} />
-                                case 'slim_product_groups_list':
-                                    return <CMSProductGroupsListSectionWrapper key={item.id} product_groups={item.data as CMSProductGroupsInterface} />
                             }
                         })
                     }
