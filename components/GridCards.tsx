@@ -15,12 +15,17 @@ export function CMSTeaserProductGridCard({ product }: { product: CMSProductInter
         <div className='TeaserProductGridCard'>
             <div key={product.id} className='cursor-pointer' onClick={(e: React.MouseEvent<HTMLDivElement>) => clickHandler(e, product.path)}>
                 <div className='bg-white'>
-                    <LNXImage
-                        className='p-4 w-full'
-                        src={product.main_image_url}
-                        alt={product.name}
-                        width='340'
-                        height='264' />
+                    {product.main_image_url && (
+                        <LNXImage
+                            className='p-4 w-full'
+                            src={product.main_image_url}
+                            alt={product.name}
+                            width='340'
+                            height='264' />
+                    ) || (
+                            <div className='w-full h-[264px] bg-theme-g-1 flex items-center justify-center'>Image not configured.</div>
+                        )}
+
                 </div>
                 <div className='p-4 text-center'>
                     <div className='w-full text-2xl font-bold'>{product.name}</div>
