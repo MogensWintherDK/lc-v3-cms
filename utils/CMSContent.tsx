@@ -229,6 +229,7 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
         let item: CMSItemInterface = {
             id: (entry.value.id ? entry.value.id : Math.floor(Math.random() * 1000000)),
             type: entry.type,
+            data: {},
         };
 
         let parent: CMSItemInterface | null = stack.peek();
@@ -285,10 +286,17 @@ export const CMSContent = async (content: Array<any>): Promise<any> => {
             item.items = [];
             stack.push(item);
         }
-        // Some elements like an image can have a link next to it - We add merge the link
+        // Some elements like an image can have a link next to it - We add merge the link, the same for header and text
         if (entry.value.link_href && item.data) {
             item.data.link_href = entry.value.link_href;
         }
+        if (entry.value.header && item.data) {
+            item.data.header = entry.value.header;
+        }
+        if (entry.value.text && item.data) {
+            item.data.text = entry.value.text;
+        }
+
         if (parent && parent.items) {
             parent.items.push(item);
         }
