@@ -52,6 +52,8 @@ export interface CMSImageGridCardInterface {
     image_url: string,
     image_alt?: string,
     link_href?: string,
+    header?: string,
+    text?: string,
 }
 
 
@@ -167,7 +169,7 @@ export function CMSGridItemsWrapper({ items }: { items: CMSItemDataInterface[] }
             }
             case 'image_grid_card': {
                 const data = sub_item.data as CMSImageGridCardInterface;
-                return <LNXImageGridCard key={sub_item.id} url={data.image_url} alt={data.image_alt} link_href={data.link_href} />;
+                return <LNXImageGridCard key={sub_item.id} url={data.image_url} alt={data.image_alt} link_href={data.link_href} header={data.header} markdown={data.text} />;
             }
             default: return <></>
         }
